@@ -18,3 +18,45 @@
         - elasticsearch-oss
         - logstash-oss
         - kibana-oss
+
+    - name: Start ELK services
+      service:
+        name: "{{ item }}"
+        enabled: true
+        state: started
+      loop:
+        - elasticsearch
+        - kibana
+
+    - name: Copy file with Elasticsearch config
+      copy:
+        src: files/elasticsearch.yml
+        dest: /etc/elasticsearch/elasticsearch.yml
+        owner: root
+        group: elasticsearch
+        mode: '0660'
+      notify: restart_elasticsearch
+
+    - name: Copy file with Kibana config
+      copy:
+        src: files/kibana.yml
+        dest: /etc/kibana/kibana.yml
+        owner: root
+        group: kibana
+        mode: '0660'
+      notify: restart_kibana
+
+    # more tasks will go here!!!
+
+  handlers:
+    - name: Restart Elasticsearch
+      service:
+        name: elasticsearch
+        state: restarted
+      listen: restart_elasticsearch
+
+    - name: Restart Kibana
+      service:
+        name: kibana
+        state: restarted
+      listen: restart_kibana
