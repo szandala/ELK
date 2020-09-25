@@ -1,0 +1,20 @@
+---
+- hosts: localhost
+  connection: local
+  gather_facts: false
+  become: true
+  tasks:
+    - name: Add Elasticsearch OpenSource repo
+      yum_repository:
+        name: Elasticsearch-OS
+        baseurl: https://artifacts.elastic.co/packages/oss-7.x/yum
+        description: ELK OpenSource repo
+        gpgcheck: false
+
+    - name: Install ELK stack
+      yum:
+        name: "{{ item }}"
+      loop:
+        - elasticsearch-oss
+        - logstash-oss
+        - kibana-oss
