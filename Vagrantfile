@@ -16,7 +16,7 @@ Vagrant.configure("2") do |config|
   config.vm.network "forwarded_port", guest: 9200, host: 9200
   config.vm.network "forwarded_port", guest: 5601, host: 5601
 
-  config.vm.provision "shell", inline: "yum install -y git python3-pip yum-utils vim tree"
+  config.vm.provision "shell", inline: "yum install -y git python3-pip yum-utils vim tree jq"
   config.vm.provision "shell", inline: "pip3 install ansible"
 
 end
