@@ -1,0 +1,86 @@
+---
+- hosts: all
+  connection: local
+  gather_facts: false
+  become: true
+  vars:
+    hostname: "NOT PROVIDED"
+  tasks:
+  - name: Add epel-release repo
+    yum:
+      name: epel-release
+      state: present
+
+  - name: Install Nginx
+    yum:
+      name: nginx
+      state: present
+
+  - name: Insert Index Page
+    template:
+      src: index.html.j2
+      dest: /usr/share/nginx/html/index.html
+
+  - name: Start Nginx
+    service:
+      name: nginx
+      state: started
+
+    # - name: Add Elasticsearch OpenSource repo
+    #   yum_repository:
+    #     name: Elasticsearch-OS
+    #     baseurl: https://artifacts.elastic.co/packages/oss-7.x/yum
+    #     description: ELK OpenSource repo
+    #     gpgcheck: false
+
+    # - name: Install Beats
+    #   yum:
+    #     name: "{{ item }}"
+    #   loop:
+    #     - metricbeat
+    #     - filebeat
+
+    # - name: Start Beats services
+    #   service:
+    #     name: "{{ item }}"
+    #     enabled: true
+    #     state: started
+    #   loop:
+    #     - metricbeat
+    #     - filebeat
+
+######################################
+
+
+  #   - name: Copy file with Elasticsearch config
+  #     copy:
+  #       src: files/elasticsearch.yml
+  #       dest: /etc/elasticsearch/elasticsearch.yml
+  #       owner: root
+  #       group: elasticsearch
+  #       mode: '0660'
+  #     notify: restart_elasticsearch
+
+  #   - name: Copy file with Kibana config
+  #     copy:
+  #       src: files/kibana.yml
+  #       dest: /etc/kibana/kibana.yml
+  #       owner: root
+  #       group: kibana
+  #       mode: '0660'
+  #     notify: restart_kibana
+
+  #   # more tasks will go here!!!
+
+  # handlers:
+  #   - name: Restart Elasticsearch
+  #     service:
+  #       name: elasticsearch
+  #       state: restarted
+  #     listen: restart_elasticsearch
+
+  #   - name: Restart Kibana
+  #     service:
+  #       name: kibana
+  #       state: restarted
+  #     listen: restart_kibana

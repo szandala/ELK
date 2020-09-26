@@ -1,0 +1,30 @@
+Vagrant.configure("2") do |config|
+  config.vm.box = "geerlingguy/centos8"
+
+  [0, 1].each do |slave_num|
+
+    vm_name = "slave#{slave_num}"
+    config.vm.define vm_name do |vm|
+
+      vm.vm.provider "virtualbox" do |vb|
+        vb.name = vm_name
+        vb.cpus = 1
+        vb.memory = 2048
+      end
+
+      vm.vm.hostname = vm_name
+      vm.vm.network "private_network", ip: "172.22.222.22#{slave_num}"
+
+      vm.vm.provision "shell", inline: "yum install -y git python3-pip yum-utils vim tree jq"
+      vm.vm.provision "shell", inline: "pip3 install ansible"
+      vm.vm.provision "ansible_local" do |ansible|
+        ansible.playbook = "/vagrant/slave-setup.yml"
+        ansible.extra_vars = {
+          hostname: vm_name
+        }
+      end
+
+    end
+  end
+
+end
