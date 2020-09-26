@@ -11,20 +11,22 @@
         description: ELK OpenSource repo
         gpgcheck: false
 
-    - name: Install ELK stack
+    - name: Install ELK stack & Heartbeat
       yum:
         name: "{{ item }}"
       loop:
+        - heartbeat-elastic
         - elasticsearch-oss
         - logstash-oss
         - kibana-oss
 
-    - name: Start ELK services
+    - name: Start ELK services & Heartbeat
       service:
         name: "{{ item }}"
         enabled: true
         state: started
       loop:
+        - heartbeat-elastic
         - elasticsearch
         - kibana
 
@@ -46,6 +48,15 @@
         mode: '0660'
       notify: restart_kibana
 
+    - name: Copy file with Heartbeat config
+      copy:
+        src: files/heartbeat.yml
+        dest: /etc/heartbeat/heartbeat.yml
+        owner: root
+        group: root
+        mode: '0600'
+      notify: restart_heartbeat
+
     # more tasks will go here!!!
 
   handlers:
@@ -60,3 +71,9 @@
         name: kibana
         state: restarted
       listen: restart_kibana
+
+    - name: Restart Heartbeat
+      service:
+        name: heartbeat-elastic
+        state: restarted
+      listen: restart_heartbeat

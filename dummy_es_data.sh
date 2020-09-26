@@ -25,3 +25,4 @@ fi
 
 # just in case:
 #curl -XDELETE http://localhost:9200/lecturers
+# curl -X GET "localhost:5601/api/kibana/dashboards/export?dashboard=22e35010-ff3a-11ea-a8c4-655e7f474722" > my-first-dashbord.json

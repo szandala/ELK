@@ -1,0 +1,40 @@
+heartbeat.monitors:
+- type: icmp
+  name: ping-slaves
+  id: ping-slaves
+  name: Slaves Ping
+  hosts:
+  - 172.22.222.220
+  - 172.22.222.221
+  schedule: "@every 10s"
+  timeout: 15s
+
+- type: http
+  name: check-nginx
+  id: check-nginx
+  urls:
+  - "http://172.22.222.220"
+  - "http://172.22.222.221"
+  schedule: "*/5 * * * * * *"
+  timeout: 15s
+
+output.elasticsearch:
+  hosts:
+  - "localhost:9200"
+  index: heartbeat-%{[agent.version]}
+
+setup:
+  kibana:
+    host: "localhost:5601"
+  template:
+    name: heartbeat
+    pattern: "heartbeat-*"
+
+logging:
+  level: info
+  to_files: true
+  files:
+    path: /var/log/heartbeat
+    name: heartbeat.log
+    keepfiles: 2
+    permissions: 0644
