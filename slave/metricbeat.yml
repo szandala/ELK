@@ -1,0 +1,63 @@
+metricbeat.modules:
+- module: system
+  period: 30s
+  metricsets:
+    - cpu             # CPU usage
+    - load            # CPU load averages
+    - memory          # Memory usage
+    - network         # Network IO
+    - process         # Per process metrics
+    - process_summary # Process summary
+    - uptime          # System Uptime
+    - socket_summary  # Socket summary
+    - core           # Per CPU core usage
+    - diskio         # Disk IO
+    - filesystem     # File system usage for each mountpoint
+    - fsstat         # File system summary metrics
+    - raid           # Raid
+    - socket         # Sockets and connection info (linux only)
+    - service        # systemd service information
+  # Configure the metric types that are included by these metricsets.
+  cpu.metrics:  ["percentages", "normalized_percentages"]  # The other available option is ticks.
+  core.metrics: ["percentages"]  # The other available option is ticks.
+
+- module: nginx
+  metricsets: ["stubstatus"]
+  period: 10s
+  hosts:
+  - "http://127.0.0.1"
+  server_status_path: "/nginx_status"
+
+tags:
+- slave
+- test
+
+#fields:
+#  hostname: ${HOSTNAME:?Missing hostname env variable}
+
+processors:
+  - fingerprint:
+      fields: ['.*']
+      ignore_missing: true
+
+output.elasticsearch:
+  hosts:
+  - "172.22.222.222:9200"
+
+setup:
+  kibana:
+    host: "172.22.222.222:5601"
+  dashboards:
+    enabled: true
+  template:
+    name: metricbeat
+    pattern: "metricbeat-*"
+
+logging:
+  level: info
+  to_files: true
+  files:
+    path: /var/log/metricbeat
+    name: metricbeat.log
+    keepfiles: 2
+    permissions: 0644

@@ -26,28 +26,48 @@
       name: nginx
       state: started
 
-    # - name: Add Elasticsearch OpenSource repo
-    #   yum_repository:
-    #     name: Elasticsearch-OS
-    #     baseurl: https://artifacts.elastic.co/packages/oss-7.x/yum
-    #     description: ELK OpenSource repo
-    #     gpgcheck: false
+### Beats section
 
-    # - name: Install Beats
-    #   yum:
-    #     name: "{{ item }}"
-    #   loop:
-    #     - metricbeat
-    #     - filebeat
+  - name: Add Elasticsearch OpenSource repo
+    yum_repository:
+      name: Elasticsearch-OS
+      baseurl: https://artifacts.elastic.co/packages/oss-7.x/yum
+      description: ELK OpenSource repo
+      gpgcheck: false
 
-    # - name: Start Beats services
-    #   service:
-    #     name: "{{ item }}"
-    #     enabled: true
-    #     state: started
-    #   loop:
-    #     - metricbeat
-    #     - filebeat
+  - name: Install Beats
+    yum:
+      name: "{{ item }}"
+    loop:
+      - metricbeat
+      - filebeat
+
+  - name: Start Beats services
+    service:
+      name: "{{ item }}"
+      enabled: true
+      state: started
+    loop:
+      - metricbeat
+      - filebeat
+
+  - name: Copy file with Metricbeat config
+    copy:
+      src: metricbeat.yml
+      dest: /etc/metricbeat/metricbeat.yml
+      owner: root
+      group: root
+      mode: '0644'
+    notify: restart_metricbeat
+
+  - name: Copy Nginx config
+    copy:
+      src: nginx.conf
+      dest: /etc/nginx/nginx.conf
+      owner: root
+      group: root
+      mode: '0644'
+    notify: restart_nginx
 
 ######################################
 
@@ -72,13 +92,18 @@
 
   #   # more tasks will go here!!!
 
-  # handlers:
-  #   - name: Restart Elasticsearch
-  #     service:
-  #       name: elasticsearch
-  #       state: restarted
-  #     listen: restart_elasticsearch
+  handlers:
+  - name: Restart Metricbeat
+    service:
+      name: metricbeat
+      state: restarted
+    listen: restart_metricbeat
 
+  - name: Restart Nginx
+    service:
+      name: nginx
+      state: restarted
+    listen: restart_nginx
   #   - name: Restart Kibana
   #     service:
   #       name: kibana
