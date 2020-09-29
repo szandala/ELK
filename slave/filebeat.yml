@@ -33,12 +33,12 @@ setup:
     pattern: "filebeat-*"
 
 output:
-  elasticsearch:
-    hosts:
-    - "172.22.222.222:9200"
-  # logstash:
+  # elasticsearch:
   #   hosts:
-  #   - "172.22.222.222:5044"
+  #   - "172.22.222.222:9200"
+  logstash:
+    hosts:
+    - "172.22.222.222:5044"
 
 logging:
   level: info

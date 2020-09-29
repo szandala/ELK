@@ -15,10 +15,10 @@
       yum:
         name: "{{ item }}"
       loop:
-        - heartbeat-elastic
-        - elasticsearch-oss
-        - logstash-oss
-        - kibana-oss
+        - heartbeat-elastic-7.8.0-1
+        - elasticsearch-oss-7.8.0-1
+        - logstash-oss-7.8.0-1
+        - kibana-oss-7.8.0-1
 
     - name: Start ELK services & Heartbeat
       service:
@@ -29,6 +29,7 @@
         - heartbeat-elastic
         - elasticsearch
         - kibana
+        - logstash
 
     - name: Copy file with Elasticsearch config
       copy:
@@ -57,7 +58,40 @@
         mode: '0600'
       notify: restart_heartbeat
 
-    # more tasks will go here!!!
+    - name: Copy file with Logstash config
+      copy:
+        src: files/logstash.yml
+        dest: /etc/logstash/logstash.yml
+        owner: root
+        group: logstash
+        mode: '0660'
+      notify: restart_logstash
+
+    - name: Copy file with Logstash's pipeline config
+      copy:
+        src: files/pipeline.conf
+        dest: /etc/logstash/conf.d/pipeline.conf
+        owner: root
+        group: logstash
+        mode: '0660'
+      notify: restart_logstash
+
+    - name: Install Logtrail as plugin for Kibana
+      command:
+        cmd: >
+          ./kibana-plugin --allow-root install \
+          https://github.com/sivasamyk/logtrail/releases/download/v0.1.31/logtrail-7.8.0-0.1.31.zip
+        chdir: /usr/share/kibana/bin
+        # creates: /usr/share/kibana/plugins/logtrail/
+
+    - name: Copy file with Logtrail config
+      copy:
+        src: files/logtrail.json
+        dest: /usr/share/kibana/plugins/logtrail/logtrail.json
+        owner: root
+        group: root
+        mode: '0664'
+      notify: restart_kibana
 
   handlers:
     - name: Restart Elasticsearch
@@ -77,3 +111,9 @@
         name: heartbeat-elastic
         state: restarted
       listen: restart_heartbeat
+
+    - name: Restart Logstash
+      service:
+        name: logstash
+        state: restarted
+      listen: restart_logstash
