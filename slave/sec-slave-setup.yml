@@ -1,0 +1,80 @@
+---
+- hosts: all
+  connection: local
+  gather_facts: false
+  become: true
+  tasks:
+  - name: Copy Filebeat keystore, that contains elasticsearch.password
+    copy:
+      src: filebeat.keystore
+      dest: /var/lib/filebeat/filebeat.keystore
+      owner: root
+      group: root
+      mode: 0600
+    notify: restart_filebeat
+
+  - name: Filebeat security update
+    blockinfile:
+      block: |
+        output.elasticsearch.username: "logstash"
+        output.elasticsearch.password: ${elasticsearch.password}
+        output.elasticsearch.ssl.verification_mode: none
+        setup.kibana.username: "kibana"
+        setup.kibana.password: ${elasticsearch.password}
+        setup.kibana.ssl.verification_mode: none
+      dest: /etc/filebeat/filebeat.yml
+      backup: yes
+      insertafter: EOF
+      marker: "# {mark} Opendistro Security configuration #"
+    notify: restart_filebeat
+
+  - name: Update Filebeat use SSL Elasticsearch's URL
+    lineinfile:
+      path: /etc/filebeat/filebeat.yml
+      regexp: 'output.elasticsearch.hosts:.+'
+      line: 'output.elasticsearch.hosts: ["https://172.22.222.222:9200"]'
+    notify: restart_filebeat
+
+  - name: Copy Metricbeat keystore, that contains elasticsearch.password
+    copy:
+      src: metricbeat.keystore
+      dest: /var/lib/metricbeat/metricbeat.keystore
+      owner: root
+      group: root
+      mode: 0600
+    notify: restart_metricbeat
+
+  - name: Metricbeat security update
+    blockinfile:
+      block: |
+        output.elasticsearch.username: "logstash"
+        output.elasticsearch.password: ${elasticsearch.password}
+        output.elasticsearch.ssl.verification_mode: none
+        setup.kibana.username: "kibana"
+        setup.kibana.password: ${elasticsearch.password}
+        setup.kibana.ssl.verification_mode: none
+      dest: /etc/metricbeat/metricbeat.yml
+      backup: yes
+      insertafter: EOF
+      marker: "# {mark} Opendistro Security configuration #"
+    notify: restart_metricbeat
+
+  - name: Update Metricbeat use SSL Elasticsearch's URL
+    lineinfile:
+      path: /etc/metricbeat/metricbeat.yml
+      regexp: 'output.elasticsearch.hosts:.+'
+      line: 'output.elasticsearch.hosts: ["https://172.22.222.222:9200"]'
+    notify: restart_metricbeat
+
+  handlers:
+  - name: Restart Metricbeat
+    service:
+      name: metricbeat
+      state: restarted
+    listen: restart_metricbeat
+
+  - name: Restart Filebeat
+    service:
+      name: filebeat
+      state: restarted
+    listen: restart_filebeat

@@ -1,0 +1,47 @@
+ca:
+   root:
+      dn: CN=root.ca.szandala,OU=CA,O=szandala\, Inc.,DC=szandala
+      keysize: 3072
+      validityDays: 730
+      pkPassword: none
+      file: root-ca.pem
+
+### Default values and global settings
+defaults:
+      validityDays: 730
+      pkPassword: none
+      # Set this to true in order to generate config and certificates for
+      # the HTTP interface of nodes
+      httpsEnabled: true
+      reuseTransportCertificatesForHttp: false
+      verifyHostnames: false
+      resolveHostnames: false
+
+
+###
+### Nodes
+###
+#
+# Specify the nodes of your ES cluster here
+#
+# nodes:
+# {% for item in groups['es-cluster'] %}
+#   - name: {{ item }}
+#     dn: CN={{ item }}.szandala,OU=Ops,O=szandala\, Inc.,DC=szandala
+#     dns: {{ item }}.szandala
+#     ip: {{ hostvars[item]['ip'] }}
+# {% endfor %}
+
+###
+### Clients
+###
+#
+# Specify the clients that shall access your ES cluster with certificate authentication here
+#
+# At least one client must be an admin user (i.e., a super-user). Admin users can
+# be specified with the attribute admin: true
+#
+clients:
+  - name: admin
+    dn: CN=admin.szandala,OU=Ops,O=szandala\, Inc.,DC=szandala
+    admin: true

@@ -1,0 +1,144 @@
+
+---
+- hosts: localhost
+  connection: local
+  gather_facts: false
+  become: true
+  tasks:
+    - name: Install OpenDistro Security as plugin for Elasticsearch
+      command:
+        cmd: >
+          ./elasticsearch-plugin install -b
+          https://d3g5vo6xdbdb9a.cloudfront.net/downloads/elasticsearch-plugins/opendistro-security/opendistro_security-1.9.0.0.zip
+        chdir: /usr/share/elasticsearch/bin
+        creates: /usr/share/elasticsearch/plugins/opendistro_security/
+      notify: restart_elasticsearch
+
+    - name: Install OpenDistro Security as plugin for Kibana
+      command:
+        cmd: >
+          ./kibana-plugin --allow-root install
+          https://d3g5vo6xdbdb9a.cloudfront.net/downloads/kibana-plugins/opendistro-security/opendistro_security_kibana_plugin-1.9.0.0.zip
+        chdir: /usr/share/kibana/bin
+        creates: /usr/share/kibana/plugins/opendistro_security/
+      notify: restart_kibana
+
+    - name: Copy the node & admin certificates to Elasticsearch cluster
+      copy:
+        src: "files/certs/{{ item }}"
+        dest: /etc/elasticsearch/
+        owner: root
+        group: elasticsearch
+        mode: "0644"
+      with_items:
+        - root-ca.pem
+        - root-ca.key
+        - nodeX.key
+        - nodeX.pem
+        - nodeX_http.key
+        - nodeX_http.pem
+        - admin.key
+        - admin.pem
+      notify: restart_elasticsearch
+
+    - name: Copy files with security config
+      copy:
+        src: "files/security_{{ item }}"
+        dest: "/usr/share/elasticsearch/plugins/opendistro_security/securityconfig/{{ item }}"
+        owner: root
+        group: root
+        mode: "0644"
+      with_items:
+        - config.yml
+        - internal_users.yml
+      notify: reload_security
+
+    - name: Elasticsearch security update
+      blockinfile:
+        block: |
+          opendistro_security.disabled: false
+          opendistro_security.allow_default_init_securityindex: true
+          opendistro_security.audit.type: internal_elasticsearch
+          opendistro_security.enable_snapshot_restore_privilege: true
+          opendistro_security.check_snapshot_restore_write_privileges: true
+          opendistro_security.restapi.roles_enabled: ["all_access", "security_rest_api_access"]
+          opendistro_security.ssl.transport.pemcert_filepath: nodeX.pem
+          opendistro_security.ssl.transport.pemkey_filepath: nodeX.key
+          opendistro_security.ssl.transport.pemtrustedcas_filepath: root-ca.pem
+          opendistro_security.ssl.transport.enforce_hostname_verification: false
+          opendistro_security.ssl.transport.resolve_hostname: false
+          opendistro_security.ssl.http.enabled: true
+          opendistro_security.ssl.http.pemcert_filepath: nodeX_http.pem
+          opendistro_security.ssl.http.pemkey_filepath: nodeX_http.key
+          opendistro_security.ssl.http.pemtrustedcas_filepath: root-ca.pem
+          opendistro_security.nodes_dn:
+          - CN=nodeX.szandala,OU=Ops,O=szandala\, Inc.,DC=szandala
+          opendistro_security.authcz.admin_dn:
+          - CN=admin.szandala,OU=Ops,O=szandala\, Inc.,DC=szandala
+        dest: /etc/elasticsearch/elasticsearch.yml
+        backup: yes
+        insertafter: EOF
+        marker: "# {mark} Opendistro Security Node & Admin certificates configuration #"
+      notify: restart_elasticsearch
+
+    - name: Kibana security update
+      blockinfile:
+        block: |
+          elasticsearch.username: "kibanaserver"
+          elasticsearch.password: ${elasticsearch.password}
+          elasticsearch.ssl.verificationMode: none
+        dest: /etc/kibana/kibana.yml
+        backup: yes
+        insertafter: EOF
+        marker: "# {mark} Opendistro Security configuration #"
+      notify: restart_kibana
+
+    - name: Update Kibana use SSL Elasticsearch's  URL
+      lineinfile:
+        path: /etc/kibana/kibana.yml
+        regexp: 'elasticsearch.hosts:.+'
+        line: 'elasticsearch.hosts: ["https://localhost:9200"]'
+      notify: restart_kibana
+
+    - name: Copy Kibana keystore, that contains elasticsearch.password
+      copy:
+        src: files/kibana.keystore
+        dest: /var/lib/kibana/kibana.keystore
+        owner: root
+        group: kibana
+        mode: 0660
+      notify: restart_kibana
+
+    # - name: Ensure Elastic is running
+    #   service:
+    #     name: "{{ item }}"
+    #     enabled: true
+    #     state: started
+    #   loop:
+    #     - elasticsearch
+    #     - kibana
+
+  handlers:
+    - name: Restart Elasticsearch
+      service:
+        name: elasticsearch
+        state: restarted
+      listen: restart_elasticsearch
+
+    - name: Restart Kibana
+      service:
+        name: kibana
+        state: restarted
+      listen: restart_kibana
+
+    - name: Apply security config changes
+      command:
+        cmd: >
+          bash
+          /usr/share/elasticsearch/plugins/opendistro_security/tools/securityadmin.sh
+          -cd /usr/share/elasticsearch/plugins/opendistro_security/securityconfig/
+          -icl -nhnv
+          -cacert /etc/elasticsearch/root-ca.pem
+          -cert /etc/elasticsearch/admin.pem
+          -key /etc/elasticsearch/admin.key
+      listen: reload_security

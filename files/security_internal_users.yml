@@ -1,0 +1,44 @@
+# All passwords are:
+# qwerty
+_meta:
+  type: "internalusers"
+  config_version: 2
+
+admin:
+  hash: "$2y$12$N5/i8SBuGv9c8vI5fYNWFe2otKwYPbAfBpNObFjCDpRJQp0k55bfC"
+  reserved: true
+  hidden: true
+  opendistro_security_roles:
+  - all_access
+  description: "Demo admin user"
+
+kibanaserver:
+  hash: "$2y$12$N5/i8SBuGv9c8vI5fYNWFe2otKwYPbAfBpNObFjCDpRJQp0k55bfC"
+  reserved: true
+  hidden: false
+  opendistro_security_roles:
+  - kibana_server
+  description: "Demo kibanaserver user"
+
+kibana:
+  hash: "$2y$12$N5/i8SBuGv9c8vI5fYNWFe2otKwYPbAfBpNObFjCDpRJQp0k55bfC"
+  reserved: false
+  opendistro_security_roles:
+  - kibana_user
+  - readall_and_monitor
+  description: "Demo kibana user"
+
+logstash:
+  hash: "$2y$12$N5/i8SBuGv9c8vI5fYNWFe2otKwYPbAfBpNObFjCDpRJQp0k55bfC"
+  reserved: true
+  hidden: false
+  opendistro_security_roles:
+  - logstash
+  description: "Demo Logstash & Beats user"
+
+readall:
+  hash: "$2y$12$N5/i8SBuGv9c8vI5fYNWFe2otKwYPbAfBpNObFjCDpRJQp0k55bfC"
+  reserved: false
+  opendistro_security_roles:
+  - readall_and_monitor
+  description: "Demo readall user"

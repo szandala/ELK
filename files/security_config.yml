@@ -1,0 +1,24 @@
+_meta:
+  type: "config"
+  config_version: 2
+
+config:
+  dynamic:
+    do_not_fail_on_forbidden: false
+    kibana:
+        multitenancy_enabled: true
+        server_username: kibanaserver
+        index: '.kibana'
+    http:
+      anonymous_auth_enabled: false
+    authc:
+      basic_internal_auth_domain:
+        description: "Authenticate via HTTP Basic against internal users database"
+        http_enabled: true
+        transport_enabled: true
+        order: 1
+        http_authenticator:
+          type: basic
+          challenge: true
+        authentication_backend:
+          type: intern

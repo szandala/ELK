@@ -10,35 +10,12 @@ filebeat.modules:
     var.paths: ["/var/log/messages"]
   auth:
     var.paths: ["/var/log/secure"]
-    # consider adding asterisk
 
-# filebeat.inputs:
-# - type: log
-#   paths:
-#     - /var/log/messages
-# multiline:
-#   # The other option is count which lets you aggregate constant number of lines.
-#   type: pattern
-#   pattern: '^[[:space:]]'
-#   negate: false
-#   match: after
+setup.kibana.host: "http://172.22.222.222:5601"
+setup.dashboards.enabled: true
+setup.ilm.enabled: false
 
-setup:
-  kibana:
-    host: "172.22.222.222:5601"
-  dashboards:
-    enabled: true
-  template:
-    name: filebeat
-    pattern: "filebeat-*"
-
-output:
-  # elasticsearch:
-  #   hosts:
-  #   - "172.22.222.222:9200"
-  logstash:
-    hosts:
-    - "172.22.222.222:5044"
+output.elasticsearch.hosts: ["172.22.222.222:9200"]
 
 logging:
   level: info

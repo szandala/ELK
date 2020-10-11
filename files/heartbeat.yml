@@ -18,17 +18,8 @@ heartbeat.monitors:
   schedule: "* */5 * * * * *"
   timeout: 15s
 
-output.elasticsearch:
-  hosts:
-  - "localhost:9200"
-  index: heartbeat-%{[agent.version]}
-
-setup:
-  kibana:
-    host: "localhost:5601"
-  template:
-    name: heartbeat
-    pattern: "heartbeat-*"
+output.elasticsearch.hosts: ["localhost:9200"]
+output.elasticsearch.index: heartbeat-%{[agent.version]}
 
 logging:
   level: info

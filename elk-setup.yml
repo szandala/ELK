@@ -37,8 +37,16 @@
         dest: /etc/elasticsearch/elasticsearch.yml
         owner: root
         group: elasticsearch
-        mode: '0660'
+        mode: 0660
       notify: restart_elasticsearch
+
+    - name: kibana.log creation
+      file:
+        path: /var/log/kibana.log
+        owner: root
+        group: kibana
+        mode: 0664
+        state: touch
 
     - name: Copy file with Kibana config
       copy:
@@ -46,7 +54,8 @@
         dest: /etc/kibana/kibana.yml
         owner: root
         group: kibana
-        mode: '0660'
+        mode: 0660
+
       notify: restart_kibana
 
     - name: Copy file with Heartbeat config
@@ -55,7 +64,7 @@
         dest: /etc/heartbeat/heartbeat.yml
         owner: root
         group: root
-        mode: '0600'
+        mode: 0600
       notify: restart_heartbeat
 
     - name: Copy file with Logstash config
@@ -64,7 +73,7 @@
         dest: /etc/logstash/logstash.yml
         owner: root
         group: logstash
-        mode: '0660'
+        mode: 0660
       notify: restart_logstash
 
     - name: Copy file with Logstash's pipeline config
@@ -73,16 +82,16 @@
         dest: /etc/logstash/conf.d/pipeline.conf
         owner: root
         group: logstash
-        mode: '0660'
+        mode: 0660
       notify: restart_logstash
 
     - name: Install Logtrail as plugin for Kibana
       command:
         cmd: >
-          ./kibana-plugin --allow-root install \
+          ./kibana-plugin --allow-root install
           https://github.com/sivasamyk/logtrail/releases/download/v0.1.31/logtrail-7.8.0-0.1.31.zip
         chdir: /usr/share/kibana/bin
-        # creates: /usr/share/kibana/plugins/logtrail/
+        creates: /usr/share/kibana/plugins/logtrail/
 
     - name: Copy file with Logtrail config
       copy:
@@ -90,7 +99,25 @@
         dest: /usr/share/kibana/plugins/logtrail/logtrail.json
         owner: root
         group: root
-        mode: '0664'
+        mode: 0664
+      notify: restart_kibana
+
+    - name: Install OpenDistro Alerting as plugin for Elasticsearch
+      command:
+        cmd: >
+          ./elasticsearch-plugin install -b
+          https://d3g5vo6xdbdb9a.cloudfront.net/downloads/elasticsearch-plugins/opendistro-alerting/opendistro_alerting-1.9.0.0.zip
+        chdir: /usr/share/elasticsearch/bin
+        creates: /usr/share/elasticsearch/plugins/opendistro_alerting/
+      notify: restart_elasticsearch
+
+    - name: Install OpenDistro Alerting as plugin for Kibana
+      command:
+        cmd: >
+          ./kibana-plugin --allow-root install
+          https://d3g5vo6xdbdb9a.cloudfront.net/downloads/kibana-plugins/opendistro-alerting/opendistro-alerting-1.9.0.0.zip
+        chdir: /usr/share/kibana/bin
+        creates: /usr/share/kibana/plugins/opendistro-alerting/
       notify: restart_kibana
 
   handlers:
